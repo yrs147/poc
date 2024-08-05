@@ -4,10 +4,11 @@ import (
 	"context"
 	"log"
 
+	"github.com/poc/internal/tls"
 	pb "github.com/poc/proto"
 
 	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials/insecure"
+	"google.golang.org/grpc/credentials"
 )
 
 const (
@@ -15,8 +16,18 @@ const (
 )
 
 func InitClient() {
+
+	// Load TLS credentials
+	tlsConfig, err := tls.LoadClientTLS()
+	if err != nil {
+		log.Fatalf("failed to load ca certs: %v", err)
+	}
+
 	// Set up a connection to the server.
-	conn, err := grpc.NewClient(address, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	conn, err := grpc.NewClient(
+		address,
+		grpc.WithTransportCredentials(credentials.NewTLS(tlsConfig)),
+	)
 	if err != nil {
 		log.Fatalf("did not connect: %v", err)
 	}
@@ -31,5 +42,3 @@ func InitClient() {
 	}
 	log.Printf("Greeting: %s", r.GetMessage())
 }
-
-
